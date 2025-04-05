@@ -5,16 +5,32 @@
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
   };
 
-  outputs = { self, nixpkgs }: {
-    devShells."x86_64-linux".default = let
-      pkgs = import nixpkgs { system = "x86_64-linux"; config.allowAliases = false; };
-      inherit (pkgs) lib;
-    in pkgs.mkShellNoCC {
+  outputs = { self, nixpkgs }: let
+    system = "x86_64-linux";
+    pkgs = import nixpkgs { inherit system; config.allowAliases = false; };
+    inherit (pkgs) lib;
+  in {
+    packages.${system}.cloud-provider-kind = pkgs.buildGoModule rec {
+      pname = "cloud-provider-kind";
+      version = "0.6.0";
+
+      src = pkgs.fetchFromGitHub {
+        owner = "kubernetes-sigs";
+        repo = "cloud-provider-kind";
+        tag = "v${version}";
+        hash = "sha256-6HdP6/uUCtLyZ7vjFGB2NLqe73v/yolRTUE5s/KyIIk=";
+      };
+
+      vendorHash = null;
+    };
+
+    devShells.${system}.default = pkgs.mkShellNoCC {
       buildInputs = with pkgs; [
         kind
         kubectl
         (pulumi.withPackages (pu: [ pu.pulumi-python ]))
         (python3.withPackages (py: [ py.pip ]))
+        self.packages.${system}.cloud-provider-kind
       ];
 
       PULUMI_CONFIG_PASSPHRASE = "pyGraz-k8s-test";

@@ -10,4 +10,10 @@
 
 ** deploy pulumi's example
 - pulumi up
-- kubectl get pods -o wide
+- kubectl get pods -o wide --all-namespaces
+
+** setup with LB and accessible services
+- cloud-provider-kind &
+- pulumi up
+- podman unshare --rootless-netns -- dillo
+  # start browser with cluster access
