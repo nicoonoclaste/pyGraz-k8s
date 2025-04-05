@@ -28,6 +28,7 @@
       buildInputs = with pkgs; [
         kind
         kubectl
+        k9s
         (pulumi.withPackages (pu: [ pu.pulumi-python ]))
         (python3.withPackages (py: [ py.pip ]))
         self.packages.${system}.cloud-provider-kind
