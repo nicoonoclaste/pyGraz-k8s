@@ -1,0 +1,4 @@
+* initial setup
+- nix develop
+- kind create cluster
+- pulumi login --local
