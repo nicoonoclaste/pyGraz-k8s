@@ -18,6 +18,7 @@
       ];
 
       PULUMI_CONFIG_PASSPHRASE = "pyGraz-k8s-test";
+      LD_LIBRARY_PATH = lib.makeLibraryPath [ pkgs.stdenv.cc.cc ];  # hack so the cygrpc wheel works
     };
   };
 }

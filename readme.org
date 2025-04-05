@@ -1,4 +1,13 @@
 * initial setup
+** setup shell, cluster, dependencies
 - nix develop
 - kind create cluster
+
+** setup pulumi for new project
 - pulumi login --local
+- pulumi new kubernetes-python
+- pulumi install
+
+** deploy pulumi's example
+- pulumi up
+- kubectl get pods -o wide
