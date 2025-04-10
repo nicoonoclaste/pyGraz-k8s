@@ -1,7 +1,10 @@
+from collections.abc import Set
+from typing import Literal
+
 import pulumi
 from pulumi_kubernetes.helm.v3 import Release, ReleaseArgs, RepositoryOptsArgs
 
-def deploy(cfg: pulumi.Config):
+def deploy(cfg: pulumi.Config, *, features: Set[Literal['hubble']] = frozenset()):
     # address and port of the k8s API server to use
     host, port = cfg.require("k8sEndpoint").rsplit(":", 1)
 
@@ -23,6 +26,11 @@ def deploy(cfg: pulumi.Config):
                 "kubeProxyReplacement": True,
                 "k8sServiceHost": host,
                 "k8sServicePort": port,
+                # Optionally enable the Hubble observability tool
+                "hubble": {
+                    "relay": { "enabled": True },
+                    "ui": { "enabled": True },
+                } if "hubble" in features else {},
             },
         ),
     )
