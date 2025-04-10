@@ -34,6 +34,7 @@
 
         # cilium (k8s networking)
         cilium-cli
+        hubble
 
         # Pulumi (infra-as-code)
         (pulumi.withPackages (pu: [ pu.pulumi-python ]))
