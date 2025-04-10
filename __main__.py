@@ -6,7 +6,9 @@ from pulumi_kubernetes.core.v1 import Service
 
 import cilium
 
-cilium_chart = cilium.deploy()
+cfg = pulumi.Config()
+
+cilium_chart = cilium.deploy(cfg)
 
 app_name = "nginx"
 app_labels = { "app": app_name }
