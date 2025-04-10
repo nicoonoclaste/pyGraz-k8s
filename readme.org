@@ -11,6 +11,8 @@
 - pulumi install
 
 * deploy base config
+- get control plane address via =kubectl get endpoints kubernetes=
+  set it in the stack's config with =pulumi config set k8sServiceHost $address=
 - pulumi up
 - kubectl get pods -o wide --all-namespaces
 - cilium status

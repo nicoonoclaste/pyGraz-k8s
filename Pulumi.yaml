@@ -9,3 +9,10 @@ config:
   pulumi:tags:
     value:
       pulumi:template: kubernetes-python
+  k8sEndpoint:
+    type: string
+    description: |
+      Endpoint description of an API server, for use by Cilium.
+
+      Can be obtained using
+        kubectl get endpoints kubernetes
