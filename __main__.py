@@ -4,12 +4,19 @@ import pulumi
 from pulumi_kubernetes.apps.v1 import Deployment
 from pulumi_kubernetes.core.v1 import Service
 
+import cilium
+
+cilium_chart = cilium.deploy()
+
 app_name = "nginx"
 app_labels = { "app": app_name }
 
 # Deploy Nginx
 deployment = Deployment(
     app_name,
+    opts = pulumi.ResourceOptions(
+        depends_on = [ cilium_chart ],  # Necessary to ensure the pod is managed by cilium
+    ),
     spec = {
         "selector": { "match_labels": app_labels },
         "replicas": 1,

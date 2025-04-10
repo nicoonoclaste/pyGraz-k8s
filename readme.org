@@ -1,19 +1,20 @@
 * initial setup
 ** setup shell, cluster, dependencies
 - nix develop
-- kind create cluster
+- kind create cluster --config kind-config.yaml
+- docker pull quay.io/cilium/cilium:v1.17.2
+- kind load docker-image quay.io/cilium/cilium:v1.17.2
 
 ** setup pulumi for new project
 - pulumi login --local
 - pulumi new kubernetes-python
 - pulumi install
 
-** deploy pulumi's example
+* deploy base config
 - pulumi up
 - kubectl get pods -o wide --all-namespaces
+- cilium status
 
-** setup with LB and accessible services
+* setup with LB and accessible services
 - cloud-provider-kind &
 - pulumi up
-- podman unshare --rootless-netns -- dillo
-  # start browser with cluster access

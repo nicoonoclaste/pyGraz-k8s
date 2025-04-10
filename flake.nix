@@ -26,12 +26,18 @@
 
     devShells.${system}.default = pkgs.mkShellNoCC {
       buildInputs = with pkgs; [
+        # kubernetes
         kind
+        self.packages.${system}.cloud-provider-kind
         kubectl
         k9s
+
+        # cilium (k8s networking)
+        cilium-cli
+
+        # Pulumi (infra-as-code)
         (pulumi.withPackages (pu: [ pu.pulumi-python ]))
         (python3.withPackages (py: [ py.pip ]))
-        self.packages.${system}.cloud-provider-kind
       ];
 
       PULUMI_CONFIG_PASSPHRASE = "pyGraz-k8s-test";
