@@ -1,24 +1,19 @@
 * initial setup
 ** setup shell, cluster, dependencies
-- nix develop
-- kind create cluster --config kind-config.yaml
-- docker pull quay.io/cilium/cilium:v1.17.2
-- kind load docker-image quay.io/cilium/cilium:v1.17.2
+- =nix develop= to have the necessary tools
+- =docker pull quay.io/cilium/cilium:v1.17.2= to prefetch the Cilium image
+- =kind create cluster --config kind-config.yaml && kind load docker-image quay.io/cilium/cilium:v1.17.2=
 - download cilium's helm chart with =helm pull cilium --version 1.17.2 --repo https://helm.cilium.io/=
   this is a workaround for something I haven't debugged yet
 
 ** setup pulumi for new project
-- pulumi login --local
-- pulumi new kubernetes-python
-- pulumi install
+- =pulumi login --local= to make Pulumi store its state locally
+- ~~=pulumi new kubernetes-python=~~ would be needed if this was a new project
+- =pulumi install= to install dependencies
 
 * deploy base config
-- get control plane address via =kubectl get endpoints kubernetes=
-  set it in the stack's config with =pulumi config set k8sServiceHost $address=
-- pulumi up
-- kubectl get pods -o wide --all-namespaces
-- cilium status
-
-* setup with LB and accessible services
-- cloud-provider-kind &
-- pulumi up
+- start =cloud-provider-kind= in the background
+- get control plane endpoint via =kubectl get endpoints kubernetes=
+  set it in the stack's config with =pulumi config set k8sEndpoint $endpoint=
+- =pulumi up=
+- check =cilium status= and =kubectl get pods -o wide --all-namespaces=
