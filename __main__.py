@@ -9,7 +9,7 @@ import cilium
 cfg = pulumi.Config()
 
 cilium_chart = cilium.deploy(cfg, features = {
-    'hubble',
+    'hubble', 'l7'
 })
 
 app_name = "nginx"

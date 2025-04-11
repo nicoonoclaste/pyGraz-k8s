@@ -4,7 +4,7 @@ from typing import Literal
 import pulumi
 from pulumi_kubernetes.helm.v3 import Release, ReleaseArgs, RepositoryOptsArgs
 
-def deploy(cfg: pulumi.Config, *, features: Set[Literal['hubble']] = frozenset()):
+def deploy(cfg: pulumi.Config, *, features: Set[Literal['hubble', 'l7']] = frozenset()):
     # address and port of the k8s API server to use
     host, port = cfg.require("k8sEndpoint").rsplit(":", 1)
 
@@ -31,6 +31,13 @@ def deploy(cfg: pulumi.Config, *, features: Set[Literal['hubble']] = frozenset()
                     "relay": { "enabled": True },
                     "ui": { "enabled": True },
                 } if "hubble" in features else {},
+
+                # Enable L7 features & make Cilium the default Ingress controller
+                "ingressController": {
+                    "enabled": True,
+                    "default": True,
+                    "loadbalancerMode": "shared",  # might want “dedicated” in a prod. setup
+                } if "l7" in features else {},
             },
         ),
     )
