@@ -4,8 +4,7 @@ from functools import reduce
 import operator
 
 import pulumi
-from pulumi_kubernetes.apps.v1 import Deployment
-from pulumi_kubernetes.core.v1 import Service
+import pulumi_kubernetes as k8s
 
 import cilium
 
@@ -21,47 +20,38 @@ pulumi.export(
     cilium_chart.resources.apply(lambda resources: [
         svc.status.load_balancer.apply(lambda lb: [ ingress.ip for ingress in lb.ingress or [] ])
         for svc in resources
-        if isinstance(svc, Service)
+        if isinstance(svc, k8s.core.v1.Service)
     ]).apply(lambda out:
         # convert a List[Output[_]] into an Output[List[_]]
         pulumi.Output.all(*out)
     ).apply(lambda out: reduce(operator.add, out, [])),
 )
 
-app_name = "nginx"
-app_labels = { "app": app_name }
-
-# Deploy Nginx
-deployment = Deployment(
-    app_name,
-    opts = pulumi.ResourceOptions(
-        depends_on = [ cilium_chart ],  # Necessary to ensure the pod is managed by cilium
+demo_app = k8s.yaml.v2.ConfigFile(
+    "bookinfo-app",
+    opts = pulumi.ResourceOptions(depends_on = cilium_chart),  # ensure the pods are managed by Cilium
+    file = "https://raw.githubusercontent.com/istio/istio/release-1.11/samples/bookinfo/platform/kube/bookinfo.yaml",
+)
+demo_ingress = k8s.networking.v1.Ingress(
+    spec = k8s.networking.v1.IngressSpecArgs(
+        rules = [
+            k8s.networking.v1.IngressRuleArgs(http = {
+                "paths": [
+                    {
+                        "backend": { "service": {
+                            "name": name,
+                            "port": { "number": 9080 },
+                        }},
+                        "path": path,
+                        "pathType": "Prefix",
+                    }
+                    for path, name in {
+                            "/details": "details",
+                            "/": "productpage",
+                    }.items()
+                ],
+            }),
+        ],
     ),
-    spec = {
-        "selector": { "match_labels": app_labels },
-        "replicas": 1,
-        "template": {
-            "metadata": { "labels": app_labels },
-            "spec": { "containers": [{ "name": app_name, "image": "nginx" }] }
-        },
-    },
 )
-
-# Allocate an IP to the Deployment.
-frontend = Service(
-    app_name,
-    metadata = {
-        "labels": deployment.spec["template"]["metadata"]["labels"],
-    },
-    spec = {
-        "type": "LoadBalancer",
-        "ports": [{ "port": 80, "target_port": 80, "protocol": "TCP" }],
-        "selector": app_labels,
-    }
-)
-
-ingress = frontend.status.load_balancer.apply(lambda v: v["ingress"][0] if "ingress" in v else "output<string>")
-pulumi.export(
-    "ip",
-    ingress.apply(lambda v: v["ip"] if v and "ip" in v else (v["hostname"] if v and "hostname" in v else "output<string>"))
-)
+pulumi.export("demo-app", demo_ingress.status.load_balancer.ingress.apply(lambda i: map(lambda j: j.ip, i)))
