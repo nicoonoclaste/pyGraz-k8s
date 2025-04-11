@@ -12,6 +12,16 @@ cilium_chart = cilium.deploy(cfg, features = {
     'hubble', 'l7'
 })
 
+pulumi.export(
+    "cilium-ingress",
+    # FIXME: this should be a flat list, either filter by svc name or flatten
+    cilium_chart.resources.apply(lambda services: [
+        svc.status.load_balancer.apply(lambda lb: [ ingress.ip for ingress in lb.ingress or [] ])
+        for svc in services
+        if isinstance(svc, Service)
+    ]),
+)
+
 app_name = "nginx"
 app_labels = { "app": app_name }
 
