@@ -5,10 +5,12 @@ import pulumi_kubernetes as k8s
 
 import cilium
 
+
+# Setup Cilium
 cfg = pulumi.Config()
 
 cilium_chart = cilium.deploy(cfg, features = {
-    'hubble',
+    "hubble",
 })
 
 
