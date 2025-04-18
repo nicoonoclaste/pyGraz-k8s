@@ -1,8 +1,7 @@
 """A Kubernetes Python Pulumi program"""
 
 import pulumi
-from pulumi_kubernetes.apps.v1 import Deployment
-from pulumi_kubernetes.core.v1 import Service
+import pulumi_kubernetes as k8s
 
 import cilium
 
@@ -12,11 +11,11 @@ cilium_chart = cilium.deploy(cfg, features = {
     'hubble',
 })
 
-app_name = "nginx"
-app_labels = { "app": app_name }
 
-# Deploy Nginx
-deployment = Deployment(
+# Deploy Nginx as a demo app (NOT how it is normally used with k8s)
+app_name = "demo-app"
+app_labels = { "app": app_name }
+deployment = k8s.apps.v1.Deployment(
     app_name,
     opts = pulumi.ResourceOptions(
         depends_on = [ cilium_chart ],  # Necessary to ensure the pod is managed by cilium
@@ -31,9 +30,9 @@ deployment = Deployment(
     },
 )
 
-# Allocate an IP to the Deployment.
-frontend = Service(
-    app_name,
+# Allocate an address for the Deployment
+service = k8s.core.v1.Service(
+    "demo-svc",
     metadata = {
         "labels": deployment.spec["template"]["metadata"]["labels"],
     },
@@ -44,8 +43,7 @@ frontend = Service(
     }
 )
 
-ingress = frontend.status.load_balancer.apply(lambda v: v["ingress"][0] if "ingress" in v else "output<string>")
 pulumi.export(
     "ip",
-    ingress.apply(lambda v: v["ip"] if v and "ip" in v else (v["hostname"] if v and "hostname" in v else "output<string>"))
+    service.status.load_balancer.ingress.apply(lambda i: map(lambda j: j.ip, i))
 )
