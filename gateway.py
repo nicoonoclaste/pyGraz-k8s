@@ -19,6 +19,28 @@ def deploy(depends_on: Sequence[pulumi.Resource] = frozenset()):
         opts = pulumi.ResourceOptions(depends_on = [ gatewayAPI_CRDs, *depends_on ]),
     )
 
+    # TODO: find a reasonable way to handle CRDs, crd2pulumi is not useable as-is
+    default_gw = k8s.apiextensions.CustomResource(
+        "default-gw",
+        api_version = "gateway.networking.k8s.io/v1",
+        kind = "Gateway",
+        metadata = k8s.meta.v1.ObjectMetaArgs(namespace = namespace),
+        opts = pulumi.ResourceOptions(depends_on = gatewayAPI_CRDs),
+        spec = {
+            "gatewayClassName": "nginx",
+            "listeners": [ {
+                "name": "http",
+                "port": 80,
+                "protocol": "HTTP",
+                "hostname": "*.k8s.local",
+                "allowedRoutes": {
+                    "kinds": [ { "kind": "HTTPRoute" } ],
+                    "namespaces": { "from": "All" },  # TODO: restrict exposure to specific namespaces
+                },
+            } ],
+        }
+    )
+
     pulumi.export(
         "nginx-ingress",
         chart.resources.apply(lambda resources: pulumi.Output.all(*(
