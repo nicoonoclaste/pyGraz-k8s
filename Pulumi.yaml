@@ -9,6 +9,11 @@ config:
   pulumi:tags:
     value:
       pulumi:template: kubernetes-python
+  external-dns:
+    type: boolean
+    default: false
+    description: |
+      Enable to expose a DNS server resolving names to external (LB) addresses
   k8sEndpoint:
     type: string
     description: |

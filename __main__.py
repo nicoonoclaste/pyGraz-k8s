@@ -15,7 +15,7 @@ cilium_chart = cilium.deploy(cfg, features = {
 
 # Setup Nginx Gateway Fabric, as the Gateway API implementation
 #  see https://gateway-api.sigs.k8s.io/
-gateway = gateway.deploy(depends_on = [ cilium_chart ])
+gateway = gateway.deploy(cfg, depends_on = [ cilium_chart ])
 
 # Demo application
 # taken from https://docs.nginx.com/nginx-gateway-fabric/get-started/

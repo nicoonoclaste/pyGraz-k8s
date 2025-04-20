@@ -5,7 +5,9 @@ import importlib.resources
 import pulumi
 import pulumi_kubernetes as k8s
 
-def deploy(depends_on: Sequence[pulumi.Resource] = frozenset()):
+from . import dns
+
+def deploy(cfg, *, depends_on: Sequence[pulumi.Resource] = frozenset()):
     namespace = k8s.core.v1.Namespace("gateway")
     gatewayAPI_CRDs = k8s.yaml.v2.ConfigFile(
         "gateway-api-CRDs",
@@ -29,17 +31,20 @@ def deploy(depends_on: Sequence[pulumi.Resource] = frozenset()):
             opts = pulumi.ResourceOptions(depends_on = [ gatewayAPI_CRDs ]),
         )
 
-    pulumi.export(
-        "nginx-ingress",
-        chart.resources.apply(lambda resources: pulumi.Output.all(*(
-            pulumi.Output.all(
-                ips = svc.status.load_balancer.apply(lambda lb: [ ingress.ip for ingress in lb.ingress or [] ]),
-                pred = svc.metadata.apply(lambda m: m.name == "nginx-gateway-fabric"),
-            )
-            for svc in resources
-            if isinstance(svc, k8s.core.v1.Service)
-        ))).apply(lambda out: reduce(lambda acc, x: acc + (x["ips"] if x["pred"] else []), out, [])),
-    )
+    if cfg.get_bool("external-dns"):
+        dns.deploy(depends_on)
+    else:
+        pulumi.export(
+            "nginx-ingress",
+            chart.resources.apply(lambda resources: pulumi.Output.all(*(
+                pulumi.Output.all(
+                    ips = svc.status.load_balancer.apply(lambda lb: [ ingress.ip for ingress in lb.ingress or [] ]),
+                    pred = svc.metadata.apply(lambda m: m.name == "nginx-gateway-fabric"),
+                )
+                for svc in resources
+                if isinstance(svc, k8s.core.v1.Service)
+            ))).apply(lambda out: reduce(lambda acc, x: acc + (x["ips"] if x["pred"] else []), out, [])),
+        )
 
     return {
         "namespace": namespace,
