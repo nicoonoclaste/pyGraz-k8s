@@ -1,8 +1,15 @@
 * initial setup
 ** setup shell, cluster, dependencies
 - =nix develop= to have the necessary tools
-- =docker pull quay.io/cilium/cilium:v1.17.2= to prefetch the Cilium image
-- =kind create cluster --config kind-config.yaml && kind load docker-image quay.io/cilium/cilium:v1.17.2=
+- =docker pull = to prefetch the Cilium image
+- =kind create cluster --config kind-config.yaml=
+- pre-load some necessary container images: Cilium for networking, and the Hickory DNS server:]
+#+BEGIN_SRC sh
+  for img in quay.io/cilium/cilium:v1.17.2 docker.io/hickorydns/hickory-dns:latest docker.io/busybox:latest; do
+      docker pull $img
+      kind load docker-image $img
+  done
+#+END_SRC
 - download cilium's helm chart with =helm pull cilium --version 1.17.2 --repo https://helm.cilium.io/=
   this is a workaround for something I haven't debugged yet
 

@@ -4,6 +4,7 @@ import pulumi
 import pulumi_kubernetes as k8s
 
 import cilium
+import dns
 import gateway
 from utils import http_get
 
@@ -13,6 +14,9 @@ cfg = pulumi.Config()
 cilium_chart = cilium.deploy(cfg, features = {
     "hubble",
 })
+
+# Setup DNS resolution
+dns.cache.deploy(cfg)
 
 # Setup Nginx Gateway Fabric, as the Gateway API implementation
 #  see https://gateway-api.sigs.k8s.io/

@@ -43,6 +43,7 @@ ignore = [
 	"DOC201",                # unclear heuristic used to check `return` is documented
 	"E201", "E202", "E251",  # we like our spaces
 	"E401",                  # allow multiple imports on one line
+	"S104",                  # binding to “all interfaces” is a non-issue w/ pervasive containerization
 	"W191",                  # ruff format is configured for tabs
 	"E101",                  # may use spaces for alignment, after tabs for indentation
 	"ERA001",                # too many false positives, see astral-sh/ruff#17710, 17713
