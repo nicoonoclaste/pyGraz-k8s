@@ -25,7 +25,7 @@ demo_ns = k8s.core.v1.Namespace("cafe")
 for beverage in ("coffee", "tea"):
     labels = { "beverage": beverage }
     meta = k8s.meta.v1.ObjectMetaArgs(
-        namespace = demo_ns,
+        namespace = demo_ns.metadata.name,
         labels = labels,
     )
 
@@ -70,11 +70,11 @@ for beverage in ("coffee", "tea"):
         f"{beverage}-route",
         api_version = "gateway.networking.k8s.io/v1",
         kind = "HTTPRoute",
-        opts = pulumi.ResourceOptions(depends_on = gw["crd"]),
+        opts = pulumi.ResourceOptions(depends_on = gateway.crds()),
         spec = {
             "parentRefs": [ {
                 "name": "gateway",
-                "namespace": gw["namespace"],
+                "namespace": gw.namespace,
                 "sectionName": "http",
             } ],
             "hostnames": [ "cafe.k8s.local" ],
