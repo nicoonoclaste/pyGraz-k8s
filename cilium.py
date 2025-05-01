@@ -4,11 +4,14 @@ from typing import Literal
 import pulumi
 import pulumi_kubernetes as k8s
 
-def deploy(cfg: pulumi.Config, *, features: Set[Literal["hubble"]] = frozenset()):
+Feature = Literal["hubble"]
+
+
+def deploy(cfg: pulumi.Config, *, features: Set[Feature] = frozenset()) -> k8s.helm.v4.Chart:
     # address and port of the k8s API server to use
     host, port = cfg.require("k8sEndpoint").rsplit(":", 1)
 
-    chart = k8s.helm.v4.Chart(
+    return k8s.helm.v4.Chart(
         "cilium",
         chart = "./cilium-1.17.2.tgz",  # FIXME pulumi somehow gets something else from the repo?
         repository_opts = k8s.helm.v3.RepositoryOptsArgs(
@@ -34,5 +37,3 @@ def deploy(cfg: pulumi.Config, *, features: Set[Literal["hubble"]] = frozenset()
             } if "hubble" in features else {},
         },
     )
-
-    return chart

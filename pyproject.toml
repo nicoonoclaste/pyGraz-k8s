@@ -1,0 +1,59 @@
+[project]
+name = "pyGraz-k8s"
+requires-python = ">= 3.10"  # needed for PEP604 notation of type unions
+
+[tool.ruff]
+line-length = 100
+preview = true
+
+[tool.ruff.lint]
+select = [
+	"ANN",     # require function annotations
+	"ARG",     # unused arguments
+	"B", "B9", # bugbear
+	"C4",      # idiomatic style with comprehensions
+	"C90",     # code complexity rules (mccabe)
+	"COM",     # commas
+	"E", "W",  # pycodestyle
+	"ERA",     # remove commented-out code
+	"F",       # pyflakes
+	"FA",      # __future__ type annotations
+	"FIX",     # explicit FIXME / HACK / TODO / XXX annotations
+	"I",       # import order
+	"N",       # naming
+	"PERF",    # performance-related rules
+	"PGH",     # pygrep-hooks: misc. rules
+	"PIE",     # flake8-pie: misc. rules
+	"PL",      # pylint
+	"PT",      # pytest-specific rules
+	"PTH",     # use pathlib, you philistine
+	"RET",     # control flow around `return`
+	"RUF",     # ruff's own rules
+	"S",       # flake8-bandit: security-related heuristics
+	"SIM",     # simplification rules
+	"SLF",     # don't poke around other classes' privates
+	"SLOT",    # detect classes which should define `__slots__`
+	"UP",      # pyupgrade: warn on obsolete syntax
+]
+ignore = [
+	"E201", "E202", "E251",  # we like our spaces
+	"E401",                  # allow multiple imports on one line
+	"W191",                  # ruff format is configured for tabs
+	"E101",                  # may use spaces for alignment, after tabs for indentation
+	"ERA001",                # too many false positives, see astral-sh/ruff#17710, 17713
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/test_*.py" = [
+	"ANN201",  # don't require `None` return type annotation on every test
+	"S101",    # may use `assert`
+	"SLF001",  # tests may access private members
+]
+"tests/*.py" = [
+	"D1",      # may not have a docstring
+	"DOC201",  # don't require documenting the returned value
+]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+force-wrap-aliases = true

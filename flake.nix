@@ -40,6 +40,9 @@
         # Pulumi (infra-as-code)
         (pulumi.withPackages (pu: [ pu.pulumi-python ]))
         (python3.withPackages (py: [ py.pip ]))
+
+        # static analysis
+        ruff
       ];
 
       PULUMI_CONFIG_PASSPHRASE = "pyGraz-k8s-test";

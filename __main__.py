@@ -3,9 +3,9 @@
 import pulumi
 import pulumi_kubernetes as k8s
 
+import cilium
+import gateway
 from utils import http_get
-import cilium, gateway
-
 
 # Setup Cilium
 cfg = pulumi.Config()
@@ -42,7 +42,10 @@ for beverage in ("coffee", "tea"):
                     containers = [ k8s.core.v1.ContainerArgs(
                         name = beverage,
                         image = "nginxdemos/nginx-hello:plain-text",
-                        ports = [ k8s.core.v1.ContainerPortArgs(name = "http", container_port = 8080) ],
+                        ports = [ k8s.core.v1.ContainerPortArgs(
+                            name = "http",
+                            container_port = 8080,
+                        ) ],
                         liveness_probe = http_get("/"),
                         readiness_probe = http_get("/"),
                     ) ],
@@ -63,7 +66,6 @@ for beverage in ("coffee", "tea"):
         ),
     )
 
-
     _ = k8s.apiextensions.CustomResource(
         f"{beverage}-route",
         api_version = "gateway.networking.k8s.io/v1",
@@ -81,6 +83,6 @@ for beverage in ("coffee", "tea"):
                     "name": svc.metadata.name,
                     "port": 80,
                 } ],
-            } ]
-        }
+            } ],
+        },
     )

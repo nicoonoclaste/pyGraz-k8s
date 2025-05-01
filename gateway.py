@@ -1,18 +1,24 @@
 from collections.abc import Sequence
 from functools import cache, reduce
+from typing import TypedDict
 
 import pulumi
 import pulumi_kubernetes as k8s
 
 
 @cache
-def crds():
+def crds() -> pulumi.Resource:
     return k8s.yaml.v2.ConfigFile(
         "gateway-api-CRDs",
         file = "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml",
     )
 
-def deploy(depends_on: Sequence[pulumi.Resource] = frozenset()):
+
+def deploy(depends_on: Sequence[pulumi.Resource] = frozenset()) -> TypedDict("GatewayDeployment", {
+    "namespace": k8s.core.v1.Namespace,
+    "chart": k8s.helm.v4.Chart,
+    "gw": k8s.apiextensions.CustomResource,
+}):
     namespace = k8s.core.v1.Namespace("gateway")
 
     chart = k8s.helm.v4.Chart(
@@ -39,27 +45,32 @@ def deploy(depends_on: Sequence[pulumi.Resource] = frozenset()):
                 "hostname": "*.k8s.local",
                 "allowedRoutes": {
                     "kinds": [ { "kind": "HTTPRoute" } ],
-                    "namespaces": { "from": "All" },  # TODO: restrict exposure to specific namespaces
+                    "namespaces": { "from": "All" },  # TODO: restrict to specific namespaces
                 },
             } ],
-        }
+        },
     )
 
     pulumi.export(
         "nginx-ingress",
         chart.resources.apply(lambda resources: pulumi.Output.all(*(
             pulumi.Output.all(
-                ips = svc.status.load_balancer.apply(lambda lb: [ ingress.ip for ingress in lb.ingress or [] ]),
+                ips = svc.status.load_balancer.apply(
+                    lambda lb: [ ingress.ip for ingress in lb.ingress or [] ],
+                ),
                 pred = svc.metadata.apply(lambda m: m.name == "nginx-gateway-fabric"),
             )
             for svc in resources
             if isinstance(svc, k8s.core.v1.Service)
-        ))).apply(lambda out: reduce(lambda acc, x: acc + (x["ips"] if x["pred"] else []), out, [])),
+        ))).apply(lambda out: reduce(
+            lambda acc, x: acc + (x["ips"] if x["pred"] else []),
+            out,
+            [],
+        )),
     )
 
     return {
         "namespace": namespace,
         "chart": chart,
-        "crd": crds(),
         "gw": default_gw,
     }
