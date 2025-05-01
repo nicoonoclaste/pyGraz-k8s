@@ -1,3 +1,13 @@
+"""Set up the Cilium CNI, as well as (optionally) Hubble observability platform.
+
+Cilium handles basic inter-node networking, service mesh, as well as security functions:
+- traffic policy enforcement, from L2/L3 firewalling to L7 policies ;
+- logging of network flows, via the Hubble feature.
+
+Cilium implements as much functionality as possible through eBPF programs executed
+in-kernel, to avoid the overhead of copying data to userspace and switching contexts.
+"""
+
 from collections.abc import Set
 from typing import Literal
 
@@ -8,6 +18,11 @@ Feature = Literal["hubble"]
 
 
 def deploy(cfg: pulumi.Config, *, features: Set[Feature] = frozenset()) -> k8s.helm.v4.Chart:
+    """Deploy Cilium with a given set of features.
+
+    Requires `k8sEndpoint` to be set in the Pulumi configuration;
+      possible values can be obtained from `kubectl get endpoints kubernetes`.
+    """
     # address and port of the k8s API server to use
     host, port = cfg.require("k8sEndpoint").rsplit(":", 1)
 

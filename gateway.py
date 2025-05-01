@@ -1,3 +1,8 @@
+"""Deploy a Gateway API implementation.
+
+The Gateway API supersedes the Ingress API, capturing L7 routing rules in a frontend-agnostic way.
+"""
+
 from collections.abc import Sequence
 from functools import cache, reduce
 from typing import TypedDict
@@ -8,6 +13,10 @@ import pulumi_kubernetes as k8s
 
 @cache
 def crds() -> pulumi.Resource:
+    """Deploy the Gateway API's Custom Resource Definitions.
+
+    Singleton, can be called by each resource depending on those definitions.
+    """
     return k8s.yaml.v2.ConfigFile(
         "gateway-api-CRDs",
         file = "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml",
@@ -19,6 +28,7 @@ def deploy(depends_on: Sequence[pulumi.Resource] = frozenset()) -> TypedDict("Ga
     "chart": k8s.helm.v4.Chart,
     "gw": k8s.apiextensions.CustomResource,
 }):
+    """Deploy Nginx Gateway Fabric as the Gateway API implementation."""
     namespace = k8s.core.v1.Namespace("gateway")
 
     chart = k8s.helm.v4.Chart(

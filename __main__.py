@@ -1,4 +1,4 @@
-"""A Kubernetes Python Pulumi program"""
+"""Set up best practices and common functionality on a Kubernetes cluster."""
 
 import pulumi
 import pulumi_kubernetes as k8s

@@ -14,6 +14,8 @@ select = [
 	"C4",      # idiomatic style with comprehensions
 	"C90",     # code complexity rules (mccabe)
 	"COM",     # commas
+	"D",       # pydocstyle
+	"DOC",     # pydoclint
 	"E", "W",  # pycodestyle
 	"ERA",     # remove commented-out code
 	"F",       # pyflakes
@@ -36,6 +38,9 @@ select = [
 	"UP",      # pyupgrade: warn on obsolete syntax
 ]
 ignore = [
+	"D203",                  # incompatible with D211, and put multi-line docstrings on cls' 1st line
+	"D213",                  # incompatible with D212, and we start multi-line docstrings on 1st line
+	"DOC201",                # unclear heuristic used to check `return` is documented
 	"E201", "E202", "E251",  # we like our spaces
 	"E401",                  # allow multiple imports on one line
 	"W191",                  # ruff format is configured for tabs
