@@ -4,8 +4,8 @@ The Gateway API supersedes the Ingress API, capturing L7 routing rules in a fron
 """
 
 from collections.abc import Sequence
+from dataclasses import dataclass
 from functools import cache, reduce
-from typing import TypedDict
 
 import pulumi
 import pulumi_kubernetes as k8s
@@ -23,11 +23,15 @@ def crds() -> pulumi.Resource:
     )
 
 
-def deploy(depends_on: Sequence[pulumi.Resource] = frozenset()) -> TypedDict("GatewayDeployment", {
-    "namespace": k8s.core.v1.Namespace,
-    "chart": k8s.helm.v4.Chart,
-    "gw": k8s.apiextensions.CustomResource,
-}):
+@dataclass(frozen = True, slots = True)
+class GatewayDeployment:
+    """Typed dict for :py:func:`gateway.deploy`'s return type."""
+    namespace: k8s.core.v1.Namespace
+    chart: k8s.helm.v4.Chart
+    gw: k8s.apiextensions.CustomResource
+
+
+def deploy(depends_on: Sequence[pulumi.Resource] = tuple()) -> GatewayDeployment:
     """Deploy Nginx Gateway Fabric as the Gateway API implementation."""
     namespace = k8s.core.v1.Namespace("gateway")
 
@@ -35,7 +39,7 @@ def deploy(depends_on: Sequence[pulumi.Resource] = frozenset()) -> TypedDict("Ga
         "nginx-gateway-fabric",
         chart = "oci://ghcr.io/nginx/charts/nginx-gateway-fabric",
         version = "1.6.2",
-        namespace = namespace,
+        namespace = namespace.metadata.name,
         opts = pulumi.ResourceOptions(depends_on = [ crds(), *depends_on ]),
     )
 
@@ -44,7 +48,7 @@ def deploy(depends_on: Sequence[pulumi.Resource] = frozenset()) -> TypedDict("Ga
         "default-gw",
         api_version = "gateway.networking.k8s.io/v1",
         kind = "Gateway",
-        metadata = k8s.meta.v1.ObjectMetaArgs(namespace = namespace),
+        metadata = k8s.meta.v1.ObjectMetaArgs(namespace = namespace.metadata.name),
         opts = pulumi.ResourceOptions(depends_on = crds()),
         spec = {
             "gatewayClassName": "nginx",
@@ -70,7 +74,7 @@ def deploy(depends_on: Sequence[pulumi.Resource] = frozenset()) -> TypedDict("Ga
                 ),
                 pred = svc.metadata.apply(lambda m: m.name == "nginx-gateway-fabric"),
             )
-            for svc in resources
+            for svc in resources  # type: ignore
             if isinstance(svc, k8s.core.v1.Service)
         ))).apply(lambda out: reduce(
             lambda acc, x: acc + (x["ips"] if x["pred"] else []),
@@ -79,8 +83,4 @@ def deploy(depends_on: Sequence[pulumi.Resource] = frozenset()) -> TypedDict("Ga
         )),
     )
 
-    return {
-        "namespace": namespace,
-        "chart": chart,
-        "gw": default_gw,
-    }
+    return GatewayDeployment(namespace, chart, default_gw)

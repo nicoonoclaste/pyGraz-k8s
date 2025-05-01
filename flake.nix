@@ -42,6 +42,7 @@
         (python3.withPackages (py: [ py.pip ]))
 
         # static analysis
+        pyright
         ruff
       ];
 

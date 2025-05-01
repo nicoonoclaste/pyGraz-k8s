@@ -29,7 +29,7 @@ def deploy(cfg: pulumi.Config, *, features: Set[Feature] = frozenset()) -> k8s.h
     return k8s.helm.v4.Chart(
         "cilium",
         chart = "./cilium-1.17.2.tgz",  # FIXME pulumi somehow gets something else from the repo?
-        repository_opts = k8s.helm.v3.RepositoryOptsArgs(
+        repository_opts = k8s.helm.v4.RepositoryOptsArgs(
             repo = "https://helm.cilium.io/",
         ),
         version = "1.17.2",  # TODO: autoupdate?
