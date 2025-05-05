@@ -3,6 +3,8 @@
 Uses Hickory DNS as a caching, validating, stub resolver.
 """
 
+import importlib.resources
+
 import pulumi
 import pulumi_kubernetes as k8s
 import tomlkit
@@ -20,6 +22,8 @@ def deploy(cfg: pulumi.Config) -> k8s.core.v1.Service:
     meta = k8s.meta.v1.ObjectMetaArgs(namespace = ns.metadata.name, labels = labels)
     hickory_address = "10.96.0.53"
     coredns_address = "10.96.0.10"
+
+    zones_dir = importlib.resources.files(__package__) / "default_zones"
 
     _ = k8s.apps.v1.DaemonSet(
         "dns-cache",
@@ -58,8 +62,13 @@ def deploy(cfg: pulumi.Config) -> k8s.core.v1.Service:
                             # TODO use a build with Prometheus metrics, set {live, readi}ness_probe
                             volume_mounts = [
                                 k8s.core.v1.VolumeMountArgs(
-                                    name = "configmap",
+                                    name = "config",
                                     mount_path = "/run/cm",
+                                    read_only = True,
+                                ),
+                                k8s.core.v1.VolumeMountArgs(
+                                    name = "zones",
+                                    mount_path = "/var/named",
                                     read_only = True,
                                 ),
                             ],
@@ -78,7 +87,7 @@ def deploy(cfg: pulumi.Config) -> k8s.core.v1.Service:
                                     read_only = False,
                                 ),
                                 k8s.core.v1.VolumeMountArgs(
-                                    name = "configmap",
+                                    name = "config",
                                     mount_path = "/run/cm",
                                     read_only = True,
                                 ),
@@ -94,7 +103,7 @@ def deploy(cfg: pulumi.Config) -> k8s.core.v1.Service:
                             ),
                         ),
                         k8s.core.v1.VolumeArgs(
-                            name = "configmap",
+                            name = "config",
                             config_map = k8s.core.v1.ConfigMapVolumeSourceArgs(
                                 name = k8s.core.v1.ConfigMap(
                                     "dns-cache-cm",
@@ -107,7 +116,7 @@ def deploy(cfg: pulumi.Config) -> k8s.core.v1.Service:
                                         )) + "\n",
                                         "hickory.toml": tomlkit.dumps({
                                             "listen_addrs_ipv4": [ "0.0.0.0" ],
-                                            # TODO default zones, DNS-over-QUIC
+                                            # TODO DNS-over-QUIC
                                             "zones": [
                                                 {
                                                     "zone": zone,
@@ -125,8 +134,28 @@ def deploy(cfg: pulumi.Config) -> k8s.core.v1.Service:
                                                     "cluster.local": f"{coredns_address}:53",
                                                     ".": "9.9.9.9:53",
                                                 }.items()
+                                            ] + [
+                                                {
+                                                    "zone": zone_file.name.removesuffix(".zone"),
+                                                    "zone_type": "Primary",
+                                                    "file": zone_file.name,
+                                                }
+                                                for zone_file in zones_dir.iterdir()
                                             ],
                                         }),
+                                    },
+                                ).metadata.name,
+                            ),
+                        ),
+                        k8s.core.v1.VolumeArgs(
+                            name = "zones",
+                            config_map = k8s.core.v1.ConfigMapVolumeSourceArgs(
+                                name = k8s.core.v1.ConfigMap(
+                                    "dns-cache-zones",
+                                    metadata = meta,
+                                    data = {
+                                        zone_file.name: zone_file.read_text()
+                                        for zone_file in zones_dir.iterdir()
                                     },
                                 ).metadata.name,
                             ),
