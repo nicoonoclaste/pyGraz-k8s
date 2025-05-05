@@ -8,6 +8,7 @@
 
 ** setup pulumi for new project
 - =pulumi login --local= to make Pulumi store its state locally
+  a production environment would have remote state, to coordinate between multiple administrators
 - ~~=pulumi new kubernetes-python=~~ would be needed if this was a new project
 - =pulumi install= to install dependencies
 
