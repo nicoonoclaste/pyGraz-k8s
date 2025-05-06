@@ -9,6 +9,10 @@ config:
   pulumi:tags:
     value:
       pulumi:template: kubernetes-python
+  upstreamDns:
+    type: string
+    default: 9.9.9.9
+    description: DNS resolver to forward non-local queries to.
   k8sEndpoint:
     type: string
     description: |

@@ -132,7 +132,7 @@ def deploy(cfg: pulumi.Config) -> k8s.core.v1.Service:
                                                 }
                                                 for zone, addr in {
                                                     "cluster.local": f"{coredns_address}:53",
-                                                    ".": "9.9.9.9:53",
+                                                    ".": f"{cfg.require('upstreamDns')}:53",
                                                 }.items()
                                             ] + [
                                                 {
