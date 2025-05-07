@@ -1,11 +1,10 @@
 * initial setup
 ** setup shell, cluster, dependencies
 - =nix develop= to have the necessary tools
-- =docker pull = to prefetch the Cilium image
 - =kind create cluster --config kind-config.yaml=
-- pre-load some necessary container images: Cilium for networking, and the Hickory DNS server:]
+- pre-load some necessary container images: Cilium for networking, and the Hickory DNS server:
 #+BEGIN_SRC sh
-  for img in quay.io/cilium/cilium:v1.17.2 docker.io/hickorydns/hickory-dns:latest docker.io/busybox:latest; do
+  for img in quay.io/cilium/cilium:v1.17.2 docker.io/hickorydns/hickory-dns:latest docker.io/busybox:latest quay.io/appzygy/ociregistry:1.8.2; do
       docker pull $img
       kind load docker-image $img
   done

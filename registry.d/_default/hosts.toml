@@ -1,0 +1,3 @@
+[host."http://oci-cache.oci-cache.svc.cluster.local"]
+  capabilities = ["pull", "resolve"]
+  skip_verify = true

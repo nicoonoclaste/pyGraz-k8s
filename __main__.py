@@ -6,6 +6,7 @@ import pulumi_kubernetes as k8s
 import cilium
 import dns
 import gateway
+import oci_cache
 from utils import http_get
 
 # Setup Cilium
@@ -15,12 +16,22 @@ cilium_chart = cilium.deploy(cfg, features = {
     "hubble",
 })
 
+
 # Setup DNS resolution
 dns.cache.deploy(cfg)
 
+# Container image cache
+# TODO: depend only on cilium core
+cache = oci_cache.deploy(cfg, depends_on = ( cilium_chart, ))
+
+# Define common dependencies: Cilium networking and the OCI cache
+# TODO: depend only on cilium core (not Hubble)
+common_deps = ( cilium_chart, *cache )
+
+
 # Setup Nginx Gateway Fabric, as the Gateway API implementation
 #  see https://gateway-api.sigs.k8s.io/
-gw = gateway.deploy(depends_on = ( cilium_chart, ))
+gw = gateway.deploy(depends_on = common_deps)
 
 # Demo application
 # adapted from https://docs.nginx.com/nginx-gateway-fabric/get-started/
@@ -36,7 +47,7 @@ for beverage in ("coffee", "tea"):
     dpl = k8s.apps.v1.Deployment(
         beverage,
         metadata = meta,
-        opts = pulumi.ResourceOptions(depends_on = ( cilium_chart, )),
+        opts = pulumi.ResourceOptions(depends_on = common_deps),
         spec = k8s.apps.v1.DeploymentSpecArgs(
             replicas = 1,
             selector = k8s.meta.v1.LabelSelectorArgs(match_labels = labels),
