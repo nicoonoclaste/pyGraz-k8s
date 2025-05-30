@@ -23,3 +23,10 @@ kubeadmConfigPatches:
     name: parallel-image-pulls
   serializeImagePulls: false
   maxParallelImagePulls: 8
+- |
+  apiVersion: kubelet.config.k8s.io/v1beta1
+  kind: KubeletConfiguration
+  metadata:
+    name: incluster-dns-cache
+  clusterDNS:
+    - 10.96.0.53
