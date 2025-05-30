@@ -15,3 +15,11 @@ containerdConfigPatches:
   # Path manually-populated on each node, with `_default/hosts.toml` pointing to a cluster-local pull-through cache
   [plugins."io.containerd.grpc.v1.cri".registry]
     config_path = "/etc/containerd/registry.d"
+kubeadmConfigPatches:
+- |
+  apiVersion: kubelet.config.k8s.io/v1beta1
+  kind: KubeletConfiguration
+  metadata:
+    name: parallel-image-pulls
+  serializeImagePulls: false
+  maxParallelImagePulls: 8
